@@ -1,0 +1,474 @@
+{
+  "name": "Search Subagent",
+  "nodes": [
+    {
+      "parameters": {
+        "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', ``, 'string') }}",
+        "count": 12,
+        "additionalParameters": {}
+      },
+      "type": "@brave/n8n-nodes-brave-search.braveSearchTool",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        16
+      ],
+      "id": "1a5224eb-ff81-4789-8831-ea5f83a843ff",
+      "name": "Brave Search",
+      "credentials": {
+        "braveSearchApi": {
+          "id": "ioR4fLdMGSkx8gBb",
+          "name": "Brave Search account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ ['web', 'web_search', 'web search', 'web-search', 'research'].includes(($json.type || '').toLowerCase().trim()) }}\n",
+                    "rightValue": "=true\n",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "8b79c01b-be3b-4fc3-972f-06a61836b099"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Research"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "74b72765-231b-4d95-b137-596eaae31a4c",
+                    "leftValue": "={{ ['fetch', 'scrape', 'fetch_url', 'url'].includes(($json.type || '').toLowerCase().trim()) }}\n",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Fetch"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1104,
+        80
+      ],
+      "id": "010b3cf0-1f1b-4780-a494-3fc8537c81c8",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=## Role\n\nYou're a researcher working on a specific research RESEARCH_TOPIC, that is part of the larger research RESEARCH_CONTEXT.\n\n## CRITICAL: API Rate Limits\n\n- Wait at least 3 seconds between Brave Search calls\n- If Brave Search fails with rate limit error, wait 5 seconds and try ONE more time\n- Prioritize quality over quantity - use searches strategically\n\nCRITICAL: Rate Limit Management\n\n- Wait 2-3 seconds between each web scraping call\n- Do NOT scrape more than 3 websites in parallel\n- If a scrape fails, try a different URL instead of retrying the same one\n- Prioritize quality over quantity - 3-5 successful scrapes is enough\n\n## Objective\n\nYour objective is to note and organize findings and insights related to RESEARCH_TOPIC that will support RESEARCH_CONTEXT.\n\n## Process\n\nThink step-by-step. Given the RESEARCH_CONTEXT and RESEARCH_TOPIC:\n\n### Step 1\nUse Brave search to identify urls of websites to scrap.\n\n### Step 2\nGet summaries of 3-10 (3 for simple topics, 10 for complex topics) of those websites using web scrapping tool.\n\n### Step 3\nAnalyze the results achieved so far\n- Do you have enough information to achieve your objective?\n- If not, what would you improve? \n- If needed, repeat Steps 1-3 to fetch additional websites. In particular, you can use different Brave request.\n\n### Step 4\nPrepare the final report: \n- Structure your response in a logical way.\n- Include INLINE LINKS to specific URLs using URL domains as text and URL as href. \n- Use markdown formatting (respect H4, H5; only {x} are variables):\n\nH4 {{ $json.researchTopic }}\n{Your main points H5, occasionally H6 with their content. You can use bullet points, inline links, and tables.}\n\n## Important\n\n- Prioritize quality research over summarization.\n- Do not skip interesting, important, or surprising facts related to RESEARCH_TOPIC.\n- Do not skip data critical for RESEARCH_TOPIC.\n- Do not summarize things unrelated to RESEARCH_TOPIC that will likely by covered by other researchers. For example, do not explain what is product discovery, when your RESEARCH_TOPIC is product discovery tools.\n\n## RESEARCH_CONTEXT \n{{ $json.context }}\n\n## RESEARCH_TOPIC\n{{ $json.researchTopic }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        -192
+      ],
+      "id": "c83cf730-d464-494b-abc9-627d378203ea",
+      "name": "Search Subagent",
+      "retryOnFail": false,
+      "waitBetweenTries": 5000,
+      "alwaysOutputData": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "description": "[Scrapper] Use this tool to scrap the content of a selected website by website url.\n\nIt will reply with a summary in this format (example):\n\n#### Execution ID: 981\n##### Page title: 7 Tools and Technologies\n##### Page URL: https://www.getcustomeriq.com/blog##### Key findings\nLorem ipsum (...)\n\nImportant: You can call use this tool multiple times in parallel.",
+        "workflowId": {
+          "__rl": true,
+          "value": "xeiq18D774gP52QS",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/xeiq18D774gP52QS",
+          "cachedResultName": "Search Subagent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('url', ``, 'string') }}",
+            "context": "={{ $('Switch').item.json.context }}",
+            "researchTopic": "={{ $('Switch').item.json.researchTopic }}",
+            "type": "Fetch"
+          },
+          "matchingColumns": [
+            "url"
+          ],
+          "schema": [
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "context",
+              "displayName": "context",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "researchTopic",
+              "displayName": "researchTopic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1744,
+        16
+      ],
+      "id": "080f3327-8b7e-4bff-9b73-28e110047bc2",
+      "name": "Fetch website",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Workflow Tool: Fetch a Website\n\nThe workflow:\n- Fetches a specific website (html)\n- Extracts findings, insights, etc. aligned with research context\n- Replies with markdown",
+        "height": 480,
+        "width": 680,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1360,
+        208
+      ],
+      "typeVersion": 1,
+      "id": "46001f6b-6f4c-41a4-933d-037359f0c0cd",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Search Subagent\n\nThe agent:\n- Uses Brave Search API to get a list of 12 search results\n- Selects 3-10 websites to analyze by the tool that extracts learnings\n- Then, the agent reflects on the progress and repeats the process, if needed\n- Finally, the agent combines all findings and returns them to the Lead Agent",
+        "height": 540,
+        "width": 680,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1360,
+        -400
+      ],
+      "typeVersion": 1,
+      "id": "33de47e6-0192-41d9-9c01-6c89d4c6eac6",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        1888,
+        16
+      ],
+      "id": "e372d393-dfbf-4383-bdbd-9dc42a901fd6",
+      "name": "Think3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You're a researcher working on a specific research RESEARCH_TOPIC, that is part of the larger research RESEARCH_CONTEXT.\n\nCreate detailed notes (learnings) based on WEBSITE_CONTENT using Markdown formatting in the following format (respect H4, H5; only {x} are variables):\n\n#### Execution ID: {{ $execution.id }}\n##### Page title: {Page title}\n##### Page URL: {{ $('When Executed by Another Workflow').item.json.url }}\n##### Key findings\n{Notes, facts, data, insights. You can use bullet points and tables (the latter are preferred).}\n\n## Important\n\n- Prioritize quality research over being concise.\n- Do not skip interesting, important, or surprising facts related to RESEARCH_TOPIC.\n- Do not skip data critical for RESEARCH_TOPIC.\n- Do not include things unrelated to RESEARCH_TOPIC that will likely by covered by other researchers. For example, do not explain what is product discovery, when your research topic is product discovery tools.\n\n## RESEARCH_CONTEXT\n{{ $('When Executed by Another Workflow').item.json.context }}\n\n## RESEARCH_TOPIC\n{{ $('When Executed by Another Workflow').item.json.researchTopic }}\n\n## WEBSITE_CONTENT\n{{ $json.data }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1680,
+        384
+      ],
+      "id": "6a58466f-d7dd-410a-b180-aa50c38c06a8",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        528
+      ],
+      "id": "37443bc3-318e-4ce6-9e19-df63af222d8b",
+      "name": "Gemini 2.5 Flash Little",
+      "credentials": {
+        "openRouterApi": {
+          "id": "OdnvMGFlBC5al2yU",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1472,
+        16
+      ],
+      "id": "2ce07670-b3b4-4735-ab43-f8025f6f904a",
+      "name": "GPT-4.1 (3)",
+      "credentials": {
+        "openRouterApi": {
+          "id": "OdnvMGFlBC5al2yU",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://scrapingant.p.rapidapi.com/get",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.url }}"
+            },
+            {
+              "name": "return_text",
+              "value": "true"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rapidapi-key",
+              "value": "3f2cea780cmsh0584b175a2dbee7p15c2c1jsnf88ff2b43b56"
+            },
+            {
+              "name": "x-rapidapi-host",
+              "value": "scrapingant.p.rapidapi.com"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1520,
+        384
+      ],
+      "id": "6648a735-fb3d-4865-9354-9d989fb9f7da",
+      "name": "HTTP Request1",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "type"
+            },
+            {
+              "name": "context"
+            },
+            {
+              "name": "researchTopic"
+            },
+            {
+              "name": "url"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        80
+      ],
+      "id": "0d6c9d7b-9636-4d7f-bdc6-34d68ac68959",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Brave Search": {
+      "ai_tool": [
+        [
+          {
+            "node": "Search Subagent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Search Subagent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch website": {
+      "ai_tool": [
+        [
+          {
+            "node": "Search Subagent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think3": {
+      "ai_tool": [
+        [
+          {
+            "node": "Search Subagent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 2.5 Flash Little": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4.1 (3)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Search Subagent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Subagent": {
+      "main": [
+        []
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cc0644d9-1323-47a9-aebb-9c973d88c6dc",
+  "meta": {
+    "instanceId": "1e7ae8b7c9722930a6ed63616071598984ea611b4c30b77437b14e2684efeecb"
+  },
+  "id": "xeiq18D774gP52QS",
+  "tags": []
+}
